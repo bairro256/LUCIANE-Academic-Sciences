@@ -59,6 +59,11 @@ function App(){
 }
 let root=null,host=null;
 function openLab(){if(root)return;host=document.createElement("div");host.id="luciane-lab-host";document.body.appendChild(host);root=createRoot(host);root.render(h(App));document.body.style.overflow="hidden"}
+function syncLabRoute(){if(location.hash==="#/laboratorio")openLab();else closeLab()}
 function closeLab(){if(root){root.unmount();root=null}host?.remove();host=null;document.body.style.overflow=""}
-window.addEventListener("luciane-lab-open",openLab);window.addEventListener("luciane-lab-close",closeLab);
+window.addEventListener("luciane-lab-open",()=>{if(location.hash!=="#/laboratorio")history.pushState(null,"",location.pathname+location.search+"#/laboratorio");openLab()});
+window.addEventListener("luciane-lab-close",()=>{if(location.hash==="#/laboratorio")history.pushState(null,"",location.pathname+location.search+"#/dashboard");closeLab()});
+window.addEventListener("hashchange",syncLabRoute);
+window.addEventListener("popstate",syncLabRoute);
+if(location.hash==="#/laboratorio")openLab();
 const observer=new MutationObserver(()=>{const nav=document.querySelector(".sidebar .nav");if(nav&&!nav.querySelector('[data-lab-button="true"]')){const b=document.createElement("button");b.type="button";b.dataset.labButton="true";b.textContent="✎  Laboratório";b.addEventListener("click",()=>window.dispatchEvent(new Event("luciane-lab-open")));const anchor=nav.querySelector('button[disabled]');nav.insertBefore(b,anchor||nav.firstChild)}});observer.observe(document.body,{childList:true,subtree:true});
