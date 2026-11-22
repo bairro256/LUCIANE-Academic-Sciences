@@ -2,3 +2,22 @@
 .certificate-row{align-items:center;gap:16px}.certificate-row>div{display:grid;gap:5px}.certificate-row>div span{font-size:10px;color:var(--muted)}.certificate-row .btn{white-space:nowrap}@media(max-width:650px){.certificate-row{grid-template-columns:1fr}.certificate-row .btn{width:100%}}
 
 .certificate-issued{margin:16px 0;padding:16px;background:#f3f7f4;border:1px solid #d9e8dd;display:grid;gap:9px}.certificate-issued strong{color:#245c3c}.certificate-issued .btn{justify-self:start}
+
+/* Navegação do laboratório e catálogo de aulas por unidades */
+.nav .lab-nav-link{margin:3px 0 8px;background:#b99b6818;color:#e4c995;border:1px solid #b99b6840}
+.nav .lab-nav-link:hover{background:#b99b6830;color:#fff}
+.lesson-organizer{display:grid;grid-template-columns:minmax(230px,290px) minmax(0,1fr);gap:24px;align-items:start}
+.lesson-catalog{min-width:0;background:#f8f9fb;border:1px solid var(--line);padding:14px;border-radius:5px}
+.lesson-search-label{display:block;font-size:8px;letter-spacing:.14em;font-weight:700;color:#8b795b;margin:0 0 7px}
+.lesson-search{width:100%;height:39px;border:1px solid var(--line);border-radius:4px;padding:0 10px;background:#fff;color:var(--ink);font:11px "DM Sans";margin-bottom:13px}
+.lesson-module-caption{font-size:8px;letter-spacing:.13em;color:#8b95a1;font-weight:700;margin:5px 0 9px}
+.lesson-modules{display:grid;gap:6px;margin-bottom:13px}
+.lesson-module{display:grid;grid-template-columns:1fr auto;gap:4px 8px;text-align:left;padding:10px;border:1px solid #e5e9ee;background:#fff;border-radius:4px;color:#44566b;cursor:pointer}
+.lesson-module span{font-size:8px;letter-spacing:.12em;color:#9a835c;font-weight:700}
+.lesson-module b{font-size:10px;grid-column:1}
+.lesson-module small{font-size:8px;color:#8b95a1;grid-column:2;grid-row:1/3;align-self:center}
+.lesson-module.active{border-color:#b99b68;background:#fbf8f1}
+.lesson-list{max-height:360px;overflow:auto;padding-right:3px}
+.lesson-choice{width:100%;min-height:48px}
+.lesson-reader{position:sticky;top:18px;max-height:calc(100vh - 170px);overflow:auto;padding:8px 0 20px 24px}
+@media(max-width:760px){.lesson-organizer{grid-template-columns:1fr;gap:15px}.lesson-catalog{padding:12px}.lesson-modules{grid-template-columns:repeat(2,minmax(0,1fr))}.lesson-list{max-height:260px}.lesson-reader{position:static;max-height:none;border-left:0;border-top:1px solid var(--line);padding:18px 0 10px}.lesson-reader h2{font-size:24px}}
