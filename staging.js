@@ -56,7 +56,7 @@ function App(){
  },[exam?.id,user?.id]);
  useEffect(()=>{
   const target=document.querySelector(".md-content");
-  if(target&&window.renderMathInElement){const slash=String.fromCharCode(92),dollar=String.fromCharCode(36);window.renderMathInElement(target,{delimiters:[{left:dollar+dollar,right:dollar+dollar,display:true},{left:slash+"[",right:slash+"]",display:true},{left:slash+"(",right:slash+")",display:false}],throwOnError:false})}
+  if(target&&window.renderMathInElement){const slash=String.fromCharCode(92),dollar=String.fromCharCode(36);window.renderMathInElement(target,{delimiters:[{left:dollar+dollar,right:dollar+dollar,display:true},{left:dollar,right:dollar,display:false},{left:slash+"[",right:slash+"]",display:true},{left:slash+"(",right:slash+")",display:false}],throwOnError:false})}
  },[selectedLesson,selectedLevelLesson,view]);
  async function loadDashboard(){
   const [d,s]=await Promise.all([
