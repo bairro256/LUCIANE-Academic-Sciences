@@ -20,7 +20,7 @@ function App(){
  const [signup,setSignup]=useState(false),[fullName,setFullName]=useState(""),[email,setEmail]=useState(""),[password,setPassword]=useState(""),[authNotice,setAuthNotice]=useState("");
  const [view,setView]=useState("dashboard"),[activeDepartment,setActiveDepartment]=useState("mathematics");
  const [departments,setDepartments]=useState([]),[states,setStates]=useState([]),[schoolState,setSchoolState]=useState(null);
- const [phaseLessons,setPhaseLessons]=useState([]),[selectedLesson,setSelectedLesson]=useState(null);
+ const [phaseLessons,setPhaseLessons]=useState([]),[selectedLesson,setSelectedLesson]=useState(null),[lessonSearch,setLessonSearch]=useState(""),[openLessonModule,setOpenLessonModule]=useState(0);
  const [levels,setLevels]=useState([]),[activeLevel,setActiveLevel]=useState(null),[levelLessons,setLevelLessons]=useState([]),[selectedLevelLesson,setSelectedLevelLesson]=useState(null);
  const [practice,setPractice]=useState(null),[practiceAnswer,setPracticeAnswer]=useState(""),[practiceFeedback,setPracticeFeedback]=useState("");
  const [exam,setExam]=useState(null),[examAnswers,setExamAnswers]=useState([]),[remaining,setRemaining]=useState(0),[examResult,setExamResult]=useState(null);
@@ -92,7 +92,7 @@ function App(){
   if(["refresh","foundation"].includes(st.phase)){
    const {data,error}=await supabase.from("science_phase_lessons").select("id,phase,lesson_number,title,estimated_minutes,learning_objectives,body_md").eq("department_id","mathematics").eq("phase",st.phase).eq("is_published",true).order("sequence_order");
    if(error){notify("Falha ao carregar aulas.");return}
-   setPhaseLessons(data||[]);setSelectedLesson((data||[])[0]||null);setLevels([]);
+   setPhaseLessons(data||[]);setSelectedLesson((data||[])[0]||null);setLessonSearch("");setOpenLessonModule(0);setLevels([]);
   }else if(st.phase==="main"){
    const {data,error}=await supabase.from("science_levels").select("id,level_number,title,summary,estimated_minutes,learning_objectives").eq("department_id","mathematics").eq("publication_status","published").order("level_number");
    if(error){notify("Falha ao carregar níveis.");return}
@@ -220,16 +220,22 @@ function App(){
   h("div",{className:"phase-step "+(currentPhase==="refresh"?"current":"")},h("span",null,"00"),h("b",null,"Refrescamento"),h("small",null,"Revisão e triagem")),
   h("i"),h("div",{className:"phase-step "+(currentPhase==="foundation"?"current":"")},h("span",null,"01"),h("b",null,"Área de Base"),h("small",null,"Recuperação rigorosa")),
   h("i"),h("div",{className:"phase-step "+(currentPhase==="main"?"current":"")},h("span",null,"02"),h("b",null,"Curso Principal"),h("small",null,"Níveis 01 — 100")));
-  const lessonPanel=h("section",{className:"panel"},
-   h("div",{className:"panel-head"},h("h3",null,PHASE[currentPhase]||"Aulas estruturadas"),h("span",{className:"tag"},phaseLessons.length+" AULAS")),
-   phaseLessons.length
-    ? h("div",{className:"lesson-layout"},
-       h("nav",{className:"lesson-list"},phaseLessons.map(l=>h("button",{key:l.id,className:"lesson-choice "+(selectedLesson?.id===l.id?"active":""),onClick:()=>setSelectedLesson(l)},h("span",null,String(l.lesson_number).padStart(2,"0")),h("b",null,l.title)))),
-       h("article",{className:"lesson-reader"},selectedLesson
-        ? h(React.Fragment,null,h("div",{className:"lesson-meta"},"AULA "+String(selectedLesson.lesson_number).padStart(2,"0")+" · "+selectedLesson.estimated_minutes+" MIN"),h("h2",null,selectedLesson.title),h("div",{className:"md-content",dangerouslySetInnerHTML:{__html:safeMarkdown(selectedLesson.body_md)}}))
-        : h("div",{className:"empty"},"Selecciona uma aula."))
-      )
-    : h("div",{className:"empty"},"Não existem aulas publicadas nesta fase.")
+  const filteredPhaseLessons=phaseLessons.filter(l=>(l.title||"").toLocaleLowerCase("pt").includes(lessonSearch.toLocaleLowerCase("pt"))||String(l.lesson_number).includes(lessonSearch.trim()));
+  const lessonModules=Array.from({length:Math.ceil(filteredPhaseLessons.length/6)},(_,i)=>({number:i+1,lessons:filteredPhaseLessons.slice(i*6,(i+1)*6)}));
+  const visibleModule=lessonModules[openLessonModule]||lessonModules[0]||{lessons:[]};
+  const lessonPanel=h("section",{className:"panel lesson-panel"},
+   h("div",{className:"panel-head"},h("div",null,h("h3",null,PHASE[currentPhase]||"Aulas estruturadas"),h("p",{className:"muted"},"Escolhe uma unidade e abre uma aula de cada vez.")),h("span",{className:"tag"},phaseLessons.length+" AULAS")),
+   h("div",{className:"lesson-organizer"},
+    h("div",{className:"lesson-catalog"},
+     h("label",{className:"lesson-search-label"},"PESQUISAR AULA"),
+     h("input",{className:"lesson-search",type:"search",value:lessonSearch,onChange:e=>{setLessonSearch(e.target.value);setOpenLessonModule(0)},placeholder:"Número ou título da aula…"}),
+     lessonSearch.trim()?h("div",{className:"lesson-module-caption"},filteredPhaseLessons.length+" resultado(s)"):h("div",{className:"lesson-module-caption"},"UNIDADES DE APRENDIZAGEM"),
+     !lessonSearch.trim()?h("div",{className:"lesson-modules"},lessonModules.map((m,i)=>h("button",{key:i,className:"lesson-module "+(openLessonModule===i?"active":""),onClick:()=>setOpenLessonModule(i)},h("span",null,"UNIDADE "+String(i+1).padStart(2,"0")),h("b",null,"Aulas "+String(m.lessons[0]?.lesson_number||"—").padStart(2,"0")+"–"+String(m.lessons[m.lessons.length-1]?.lesson_number||"—").padStart(2,"0")),h("small",null,m.lessons.length+" aulas")))):null,
+     h("nav",{className:"lesson-list"},visibleModule.lessons.map(l=>h("button",{key:l.id,className:"lesson-choice "+(selectedLesson?.id===l.id?"active":""),onClick:()=>setSelectedLesson(l)},h("span",null,String(l.lesson_number).padStart(2,"0")),h("b",null,l.title)))),
+     filteredPhaseLessons.length===0?h("div",{className:"empty"},"Nenhuma aula corresponde à pesquisa."):null
+    ),
+    h("article",{className:"lesson-reader"},selectedLesson?h(React.Fragment,null,h("div",{className:"lesson-meta"},"AULA "+String(selectedLesson.lesson_number).padStart(2,"0")+" · "+selectedLesson.estimated_minutes+" MIN"),h("h2",null,selectedLesson.title),h("div",{className:"md-content",dangerouslySetInnerHTML:{__html:safeMarkdown(selectedLesson.body_md)}})):h("div",{className:"empty"},"Selecciona uma aula para começar."))
+   )
   );
   const levelPanel=h("section",{className:"panel"},
    h("div",{className:"panel-head"},h("h3",null,"Mapa curricular · 100 níveis"),h("span",{className:"tag"},"NÍVEL ACTUAL "+String(schoolState?.current_level||0).padStart(2,"0"))),
@@ -267,7 +273,7 @@ function App(){
  return h("div",{className:"shell"},
   h("aside",{className:"sidebar"},h("div",{className:"brand side-brand"},h("span",{className:"seal"},"L"),h("span",null,"LUCIANE",h("small",null,"ACADEMIC SCIENCES"))),
    h("div",{className:"side-label"},"AMBIENTE ACADÉMICO"),
-   h("nav",{className:"nav"},h("button",{className:view==="dashboard"?"active":"",onClick:()=>route("dashboard")},"⌂  Visão geral"),h("div",{className:"side-label group"},"ESCOLAS"),h("button",{className:view==="school"?"active":"",onClick:openMath},"∑  Matemática"),h("button",{disabled:true,title:"Em desenvolvimento curricular"},"Φ  Física · em preparação"),h("button",{disabled:true,title:"Em desenvolvimento curricular"},"⚗  Química · em preparação"),h("div",{className:"side-label group"},"REGISTO ACADÉMICO"),h("button",{className:view==="record"?"active":"",onClick:openRecord},"▤  Boletim & histórico"),h("button",{className:view==="certificates"?"active":"",onClick:openCertificates},"◇  Certificações")),
+   h("nav",{className:"nav"},h("button",{className:view==="dashboard"?"active":"",onClick:()=>route("dashboard")},"⌂  Visão geral"),h("div",{className:"side-label group"},"ESCOLAS"),h("button",{className:view==="school"?"active":"",onClick:openMath},"∑  Matemática"),h("button",{className:"lab-nav-link",onClick:()=>window.dispatchEvent(new Event("luciane-lab-open"))},"✎  Laboratório de Cálculos"),h("button",{disabled:true,title:"Em desenvolvimento curricular"},"Φ  Física · em preparação"),h("button",{disabled:true,title:"Em desenvolvimento curricular"},"⚗  Química · em preparação"),h("div",{className:"side-label group"},"REGISTO ACADÉMICO"),h("button",{className:view==="record"?"active":"",onClick:openRecord},"▤  Boletim & histórico"),h("button",{className:view==="certificates"?"active":"",onClick:openCertificates},"◇  Certificações")),
    h("div",{className:"side-bottom"},"Rigor. Método. Domínio.",h("br"),"Formação científica progressiva")),
   h("main",{className:"main"},h("header",{className:"topbar"},h("div",{className:"crumb"},"LUCIANE",h("b",null,"/"),view==="school"?"Escola de Matemática":view==="record"?"Boletim & histórico":view==="certificates"?"Certificações":"Visão geral"),h("div",{className:"top-actions"},h("span",{className:"status"},h("i"),"AMBIENTE REACT · SUPABASE"),h("button",{className:"avatar",onClick:signOut,title:"Terminar sessão"},(user.email||"L").slice(0,1).toUpperCase()))),
    view==="dashboard"?h(React.Fragment,null,h("section",{className:"hero"},h("p",{className:"eyebrow"},"PLATAFORMA DE FORMAÇÃO CIENTÍFICA"),h("h1",null,"O domínio não se ",h("em",null,"presume. Comprova-se.")),h("p",null,"Três escolas independentes, progressão sequencial, prática algorítmica e avaliações com validação no servidor."),h("div",{className:"hero-meta"},h("span",null,"03 ESCOLAS"),h("span",null,"100 NÍVEIS POR ESCOLA"),h("span",null,"HISTÓRICO INDIVIDUAL"))),h("div",{className:"section-head"},h("div",null,h("h2",null,"Escolas científicas"),h("p",null,"Cada escola tem currículo, avaliações e progresso próprios.")),h("span",{className:"section-no"},"01 — 03")),h("div",{className:"cards"},schoolCards),h("section",{className:"panel"},h("div",{className:"panel-head"},h("h3",null,"Panorama académico"),h("span",{className:"tag"},"PROGRESSO")),progressRows.length?progressRows:h("div",{className:"empty"},"Inicia a Escola de Matemática para começar."))):view==="school"?schoolContent:view==="record"?recordContent:certContent,
