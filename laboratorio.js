@@ -83,4 +83,3 @@ window.addEventListener("luciane-lab-close",()=>{if(location.hash==="#/laborator
 window.addEventListener("hashchange",syncLabRoute);
 window.addEventListener("popstate",syncLabRoute);
 if(location.hash==="#/laboratorio")openLab();
-const observer=new MutationObserver(()=>{const nav=document.querySelector(".sidebar .nav");if(nav&&!nav.querySelector('[data-lab-button="true"]')){const b=document.createElement("button");b.type="button";b.dataset.labButton="true";b.textContent="✎  Laboratório";b.addEventListener("click",()=>window.dispatchEvent(new Event("luciane-lab-open")));const anchor=nav.querySelector('button[disabled]');nav.insertBefore(b,anchor||nav.firstChild)}});observer.observe(document.body,{childList:true,subtree:true});
