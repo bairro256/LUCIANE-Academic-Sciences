@@ -35,7 +35,7 @@ function App(){
  function stop(){drawing.current=false;last.current=null}
  function clearBoard(){const c=canvasRef.current;c.getContext("2d").clearRect(0,0,c.width,c.height)}
  function calculate(){try{const v=evaluate(expression.replace(/×/g,"*").replace(/÷/g,"/").replace(/,/g,"."));setCalcResult(String(v))}catch(e){setCalcResult("Expressão inválida. Verifica os sinais e parênteses.")}}
- function newExercise(){const list=exercises[cycle];setExercise(list[Math.floor(Math.random()*list.length)]);setAnswer("");setFeedback("")}
+ function newExercise(){const list=exercises[cycle].filter(item=>item.d===subject);const pool=list.length?list:exercises[cycle];setExercise(pool[Math.floor(Math.random()*pool.length)]);setAnswer("");setFeedback("")}
  function check(){if(!exercise||!answer.trim())return;const ok=answer.trim().replace(",",".").toLowerCase()===exercise.a.toLowerCase();setFeedback((ok?"✓ Correcto! ":"Ainda não está correcto. ")+exercise.solution)}
  const tab=(name)=>h("button",{key:name,className:"lab-tab "+(subject===name?"active":""),onClick:()=>{setSubject(name);setSelected(null)}},name);
  return h("div",{className:"lab-backdrop",onMouseDown:e=>{if(e.target===e.currentTarget)window.dispatchEvent(new Event("luciane-lab-close"))}},
