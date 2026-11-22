@@ -1,8 +1,25 @@
 import React,{useEffect,useRef,useState} from "https://esm.sh/react@18.3.1";
 import {createRoot} from "https://esm.sh/react-dom@18.3.1/client";
-import {evaluate} from "https://esm.sh/mathjs@14.8.1?bundle";
 
 const h=React.createElement;
+function safeEvaluate(source){
+ const tokens=String(source).replace(/×/g,"*").replace(/÷/g,"/").replace(/,/g,".").match(/(?:\d+(?:\.\d*)?|\.\d+)|[A-Za-z]+|[()+\-*/^]/g)||[];
+ let i=0;
+ function peek(){return tokens[i]}
+ function take(){return tokens[i++]}
+ function expression(){let v=term();while(peek()==="+"||peek()==="-"){const op=take(),r=term();v=op==="+"?v+r:v-r}return v}
+ function term(){let v=unary();while(peek()==="*"||peek()==="/"){const op=take(),r=unary();v=op==="*"?v*r:v/r}return v}
+ function unary(){if(peek()==="+"){take();return unary()}if(peek()==="-"){take();return -unary()}return power()}
+ function power(){let v=primary();if(peek()==="^"){take();v=Math.pow(v,unary())}return v}
+ function primary(){
+  const t=take();if(t==="("){const v=expression();if(take()!==")")throw Error();return v}
+  if(t&&(/^[0-9]/.test(t)||t[0]==="."))return Number(t);
+  if(t==="pi")return Math.PI;if(t==="e")return Math.E;
+  if(t&&/^[A-Za-z]+$/.test(t)){if(take()!=="(")throw Error();const x=expression();if(take()!==")")throw Error();const f={sqrt:Math.sqrt,sin:Math.sin,cos:Math.cos,tan:Math.tan,log:Math.log10,ln:Math.log,abs:Math.abs};if(!f[t])throw Error();return f[t](x)}
+  throw Error();
+ }
+ const result=expression();if(i!==tokens.length||!Number.isFinite(result))throw Error();return result;
+}
 const exercises={
  "1":[
   {d:"Matemática",q:"Resolve: 3x + 5 = 20",a:"5",hint:"Subtrai 5 aos dois membros e depois divide por 3.",solution:"3x + 5 = 20 → 3x = 15 → x = 5."},
@@ -34,7 +51,7 @@ function App(){
  function move(e){if(!drawing.current)return;const p=point(e),ctx=canvasRef.current.getContext("2d");ctx.beginPath();ctx.moveTo(last.current.x,last.current.y);ctx.lineTo(p.x,p.y);ctx.stroke();last.current=p}
  function stop(){drawing.current=false;last.current=null}
  function clearBoard(){const c=canvasRef.current;c.getContext("2d").clearRect(0,0,c.width,c.height)}
- function calculate(){try{const v=evaluate(expression.replace(/×/g,"*").replace(/÷/g,"/").replace(/,/g,"."));setCalcResult(String(v))}catch(e){setCalcResult("Expressão inválida. Verifica os sinais e parênteses.")}}
+ function calculate(){try{const v=safeEvaluate(expression);setCalcResult(String(v))}catch(e){setCalcResult("Expressão inválida. Verifica os sinais e parênteses.")}}
  function newExercise(){const list=exercises[cycle].filter(item=>item.d===subject);const pool=list.length?list:exercises[cycle];setExercise(pool[Math.floor(Math.random()*pool.length)]);setAnswer("");setFeedback("")}
  function check(){if(!exercise||!answer.trim())return;const ok=answer.trim().replace(",",".").toLowerCase()===exercise.a.toLowerCase();setFeedback((ok?"✓ Correcto! ":"Ainda não está correcto. ")+exercise.solution)}
  const tab=(name)=>h("button",{key:name,className:"lab-tab "+(subject===name?"active":""),onClick:()=>{setSubject(name);setSelected(null)}},name);
